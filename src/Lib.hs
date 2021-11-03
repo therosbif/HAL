@@ -1,6 +1,9 @@
 module Lib
-    ( someFunc
+    ( handleFile
     ) where
+import System.IO (readFile)
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+handleFile :: String -> IO ()
+handleFile f = do
+    xs <- lines <$> readFile f
+    mapM_ putStrLn xs

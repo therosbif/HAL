@@ -24,6 +24,9 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - haskeline
+  - containers
 
 executables:
   hal-exe:
@@ -35,6 +38,8 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - hal
+    - haskeline
+    - containers
 
 tests:
   hal-test:
