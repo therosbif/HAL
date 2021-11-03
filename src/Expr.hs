@@ -15,17 +15,18 @@ data Expr =
   | List [Expr]
 
 instance Show Expr where
-  show (Atom (Integer x)) = "(Atom Integer " ++ show x ++ ")"
-  show (Atom (Double x)) = "(Atom Double " ++ show x ++ ")"
-  show (Atom (Word x)) = "(Atom Word " ++ x ++ ")"
+  show (Atom (Integer x)) = "(Integer " ++ show x ++ ")"
+  show (Atom (Double x)) = "(Double " ++ show x ++ ")"
+  show (Atom (Word x)) = "(Word " ++ x ++ ")"
   show (List x) = show x
 
 ast :: Parser Char Expr
-ast = expr
+ast = List <$> list
   where
     expr = padding (List <$> list <|> Atom <$> atom)
-    list = parseChar '(' *> padding (many expr) <* parseChar ')'
+    list = parens $ padding (many expr)
     atom =
       Double <$> parseDouble <|>
       Integer <$> parseInt <|>
       Word <$> parseWord
+    parens p = padding (parseChar '(' *> p <* parseChar ')')
