@@ -41,16 +41,14 @@ instance Alternative (Parser i) where
   (Parser f) <|> p2 = Parser $ \s -> f s <|> p2
   l <|> _  = l
 
-check :: (i -> Bool) -> Parser i i
-check f = Parser $ \s -> case s of
-  (x:xs) | f x -> Success x xs
-  _            -> Failure "Predicate failed" s
+(<+>) :: Parser i [o] -> Parser i [o] -> Parser i [o]
+p1 <+> p2 = (++) <$> p1 <*> p2
 
 runParser :: Parser i o -> [i] -> Either (String,[i]) o
 runParser (Success o i) s = Right o
 runParser (Failure e i) s = Left (e,i)
 runParser (Parser f) s = case f s of
   Success o [] -> Right o
-  Success o i  -> Left  ("Stream was not entirely consumed.", i)
-  Failure e i  -> Left  (e,i)
+  Success o i  -> Left ("Stream was not entirely consumed.", i)
+  Failure e i  -> Left (e,i)
   Parser g     -> runParser (g s) s

@@ -1,32 +1,21 @@
 module Expr where
 
-import Builtins (Procedure)
-import Parser (Parser)
-import Parsers (parseChar, padding, parseWord, parseDouble, parseInt)
-import Control.Applicative ( Alternative(many, (<|>)) )
-
-data Atom' =
-    Integer Integer
-  | Double Double
-  | Word String
-
 data Expr =
-    Atom Atom'
+    Atom String
   | List [Expr]
+  | DottedList [Expr] Expr
+  | Number Integer
+  | Double Double
+  | String String
+  | Bool Bool
 
 instance Show Expr where
-  show (Atom (Integer x)) = "(Integer " ++ show x ++ ")"
-  show (Atom (Double x)) = "(Double " ++ show x ++ ")"
-  show (Atom (Word x)) = "(Word " ++ x ++ ")"
-  show (List x) = show x
-
-ast :: Parser Char Expr
-ast = List <$> list
-  where
-    expr = padding (List <$> list <|> Atom <$> atom)
-    list = parens $ padding (many expr)
-    atom =
-      Double <$> parseDouble <|>
-      Integer <$> parseInt <|>
-      Word <$> parseWord
-    parens p = padding (parseChar '(' *> p <* parseChar ')')
+  show (Atom x) = x
+  show (Number x) = show x
+  show (Double x) = show x
+  show (String x) = "\"" ++ x ++ "\""
+  show (Bool True) = "#t"
+  show (Bool False) = "#f"
+  show (List x) = "(" ++ (unwords . map show) x ++ ")"
+  show (DottedList l e) =
+    "(" ++ (unwords . map show) l ++ " . " ++ show e ++ ")"
