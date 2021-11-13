@@ -27,6 +27,7 @@ library:
   dependencies:
   - haskeline
   - containers
+  - mtl
 
 executables:
   hal-exe:
@@ -40,6 +41,7 @@ executables:
     - hal
     - haskeline
     - containers
+    - mtl
 
 tests:
   hal-test:
