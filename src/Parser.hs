@@ -15,7 +15,7 @@ instance (Eq i, Eq o) => Eq (Parser i o) where
   _ == _ = False
 instance (Show i, Show o) => Show (Parser i o) where
   show (Success o i) = "Success (" ++ show o ++ ", " ++ show i ++ ")"
-  show (Failure e i) = "Failure (\"" ++ e ++ "\", " ++ show i ++ ")"
+  show (Failure e i) = e
   show (Parser f) = "Parser"
 
 instance Functor (Parser i) where

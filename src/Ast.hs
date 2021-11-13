@@ -34,12 +34,13 @@ readExpr :: String -> ThrowsError Expr
 readExpr s = case runParser ast s of
   Left (e,i) -> throwError $ Parse (Failure e i) (errpos s i)
   Right o -> return o
-  where
-    errpos s i = let
-      pos   = length s - length i
-      begin = take pos s
-      end   = drop pos s
-      in "\t" ++ begin ++ " <here> " ++ end ++ "\n"
+  where errpos s i = let
+          pos   = length s - length i
+          begin = take pos s
+          end   = drop pos s
+          red   = "\x1b[31m"
+          reset = "\x1b[0m"
+          in "\t" ++ begin ++ red ++ "here-->" ++ reset ++ end ++ "\n"
 
 interpret :: String -> IO ()
 interpret s =

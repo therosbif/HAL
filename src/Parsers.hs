@@ -11,7 +11,7 @@ import Expr (Expr(Atom, Double, Number, Bool, String))
 check :: (i -> Bool) -> Parser i i
 check f = Parser $ \s -> case s of
   (x:xs) | f x -> Success x xs
-  _            -> Failure "Predicate failed." s
+  _            -> Failure "Invalid char." s
 
 char :: Char -> Parser Char Char
 char c = check (== c)
