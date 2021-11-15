@@ -7,7 +7,7 @@ import Builtins
       isNumber,
       isString,
       typeTest,
-      Procedure )
+      Procedure, car, cdr, cons, equal, lambda )
 import Control.Monad.Except (MonadError(throwError))
 
 arithmeticProcedures :: [([Char], Procedure)]
@@ -24,9 +24,21 @@ arithmeticProcedures =
 booleanProcedures :: [([Char], Procedure)]
 booleanProcedures =
   [ ("eq?", boolBinOp (==)),
+    ("equal?", boolBinOp equal),
     ("<", boolBinOp (<)),
     (">", boolBinOp (>)),
     ("atom?", typeTest isAtom),
     ("string?", typeTest isString),
     ("number?", typeTest isNumber)
   ]
+
+listProcedures :: [([Char], Procedure)]
+listProcedures =
+  [ ("car", car),
+    ("cdr", cdr),
+    ("cons", cons)
+  ]
+
+specialFormProcedures :: [([Char], Procedure)]
+specialFormProcedures =
+  [ ("lambda", lambda)]

@@ -10,6 +10,7 @@ data Expr =
   | Double Double
   | String String
   | Bool Bool
+  | Procedure Expr Expr
 
 instance Show Expr where
   show (Atom x)     = x
@@ -21,6 +22,7 @@ instance Show Expr where
   show (String x)   = "\"" ++ x ++ "\""
   show (Bool True)  = "#t"
   show (Bool False) = "#f"
+  show (Procedure _ _) = "#<procedure>"
 
 instance Eq Expr where
   (Atom a) == (Atom b)      = a == b

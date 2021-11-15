@@ -3,7 +3,7 @@ module Builtins where
 import Control.Monad.Except (MonadError (throwError))
 import qualified Data.Map.Strict as Map
 import Expr
-  ( Expr (Atom, Bool, DottedList, Double, List, Number, String),
+  ( Expr (Atom, Bool, DottedList, Double, List, Number, String, Procedure),
     SchemeError (NumArgs, TypeMismatch, Default),
     ThrowsError,
   )
@@ -47,6 +47,9 @@ pairs f t = True
 
 ----------------------------------------------------
 
+equal :: Expr -> Expr -> Bool
+equal a b = show a == show b
+
 typeTest :: (Expr -> Bool) -> Procedure
 typeTest c args = return $ Bool $ all c args
 
@@ -64,3 +67,30 @@ isNumber (Double _) = True
 isNumber _ = False
 
 ----------------------------------------------------
+
+car :: Procedure
+car [List (x:_)] = return x
+car [DottedList (x:_) _] = return x
+car [v] = throwError $ TypeMismatch "list" v
+car v = throwError $ NumArgs 1 v
+
+cdr :: Procedure
+cdr [List (_:xs)] = return $ List xs
+cdr [DottedList [_] a] = return a
+cdr [DottedList (_:xs) a] = return $ DottedList xs a
+cdr [v] = throwError $ TypeMismatch "list" v
+cdr v = throwError $ NumArgs 1 v
+
+cons :: Procedure
+cons [v, List []] = return $ List [v]
+cons [v, List vs] = return $ List (v:vs)
+cons [v, DottedList xs x] = return $ DottedList (v:xs) x
+cons [x, y] = return $ DottedList [x] y
+cons v = throwError $ NumArgs 2 v
+
+----------------------------------------------------
+
+lambda :: Procedure
+lambda [args@(List _), e] = return $ Procedure args e
+lambda [args, e] = return $ Procedure (List [args]) e
+lambda v = throwError $ NumArgs 2 v
