@@ -19,8 +19,12 @@ handleArgs (x:xs) s =
 main :: IO ()
 main = do
   args <- getArgs
-  catch (if not $ null args then handleArgs args [] else putStrLn "REPL")
-    (\e ->  let err = show (e :: SomeException)
-            in if err /= "exitSuccess"
-                then hPutStr stderr err >> exitWith (ExitFailure 84)
-                else exitSuccess)
+  catch
+    (if null args || elem "-i" args
+      then runRepl
+      else handleArgs args [])
+    (\e ->
+      let err = show (e :: SomeException)
+      in if err /= "exitSuccess"
+          then hPutStr stderr err >> exitWith (ExitFailure 84)
+          else exitSuccess)
