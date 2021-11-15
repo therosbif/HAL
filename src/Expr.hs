@@ -10,25 +10,23 @@ data Expr =
   | Double Double
   | String String
   | Bool Bool
-  | Error String
 
 instance Show Expr where
-  show (Atom x) = x
-  show (List x) = "(" ++ (unwords . map show) x ++ ")"
+  show (Atom x)     = x
+  show (List x)     = "(" ++ (unwords . map show) x ++ ")"
   show (DottedList l e) =
     "(" ++ (unwords . map show) l ++ " . " ++ show e ++ ")"
-  show (Number x) = show x
-  show (Double x) = show x
-  show (String x) = "\"" ++ x ++ "\""
-  show (Bool True) = "#t"
+  show (Number x)   = show x
+  show (Double x)   = show x
+  show (String x)   = "\"" ++ x ++ "\""
+  show (Bool True)  = "#t"
   show (Bool False) = "#f"
-  show (Error x) = "Error: " ++ x
 
 instance Eq Expr where
   (Atom a) == (Atom b)      = a == b
-  (List a) == (List b)      = a == b
-  (DottedList a as) == b    = List (a ++ [as]) == b
-  a == (DottedList b bs)    = a == List (b ++ [bs])
+  (List []) == (List [])    = True
+  (DottedList a (List [])) == b    = List a == b
+  a == (DottedList b (List []))    = a == List b
   (Number a) == (Number b)  = a == b
   (Double a) == (Double b)  = a == b
   (Number a) == b           = Double (fromIntegral a) == b

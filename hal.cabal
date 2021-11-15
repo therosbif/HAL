@@ -27,10 +27,12 @@ library
   exposed-modules:
       Ast
       Builtins
+      Eval
       Expr
-      Lib
+      File
       Parser
       Parsers
+      Procedures
       Utils
   other-modules:
       Paths_hal

@@ -1,5 +1,24 @@
 module Utils where
+import Expr
+    ( Expr(Bool, List, Number, String),
+      SchemeError(TypeMismatch),
+      ThrowsError )
+import Control.Monad.Except ( MonadError(throwError) )
 
-pairs :: (a -> a -> Bool) -> [a] -> Bool
-pairs f (x:y:t)  = f x y && pairs f (y:t)
-pairs f t        = True
+-----------------------------------------------
+
+unpackList :: Expr -> Expr
+unpackList (List [n]) = unpackList n
+unpackList n = n
+
+unpackNum :: Expr -> ThrowsError Integer
+unpackNum (Number n) = return n
+unpackNum nan = throwError $ TypeMismatch "number" nan
+
+unpackStr :: Expr -> ThrowsError String
+unpackStr (String s) = return s
+unpackStr nan = throwError $ TypeMismatch "string" nan
+
+unpackBool :: Expr -> ThrowsError Bool
+unpackBool (Bool b) = return b
+unpackBool nan = throwError $ TypeMismatch "boolean" nan

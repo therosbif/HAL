@@ -1,23 +1,10 @@
 module Ast where
 import Parser (Parser(Parser, Failure), runParser)
-import Expr (Expr (List, Double, Number, Bool, String, Atom, DottedList, Error), ThrowsError, SchemeError (Parse, SpecialFormErr, NotFunction), extractValue, showErr)
-import Parsers (padding, double, int, bool, string, atom, char, value, parens)
+import Expr (Expr (List, Atom, DottedList),
+             ThrowsError, SchemeError (Parse))
+import Parsers (padding, char, value, parens)
 import Control.Applicative (Alternative(many), (<|>))
-import Builtins (procedures)
 import Control.Monad.Except (MonadError(throwError))
-
-apply :: String -> [Expr] -> ThrowsError Expr
-apply func args = maybe (throwError $ NotFunction
-  "Unrecognised primitive function args" func) ($ args) (lookup func procedures)
-
-eval :: Expr -> ThrowsError Expr
-eval v@(String _) = return v
-eval v@(Number _) = return v
-eval v@(Double _) = return v
-eval v@(Bool _)   = return v
-eval (List [Atom "quote", v]) = return v
-eval (List (Atom func : args)) = mapM eval args >>= apply func
-eval v = throwError $ SpecialFormErr "Unrecognized special form" v
 
 ast :: Parser Char Expr
 ast = expr
@@ -26,8 +13,7 @@ ast = expr
     quoted = char '\'' >> expr >>= (\x -> return $ List [Atom "quote", x])
     dottedList = do
       head <- many expr <* padding (char '.')
-      tail <- padding expr
-      return $ DottedList head tail
+      DottedList head <$> expr
     list = List <$> many expr
 
 readExpr :: String -> ThrowsError Expr
@@ -41,8 +27,3 @@ readExpr s = case runParser ast s of
           red   = "\x1b[31m"
           reset = "\x1b[0m"
           in "\t" ++ begin ++ red ++ "here-->" ++ reset ++ end ++ "\n"
-
-interpret :: String -> IO ()
-interpret s =
-  let evaled = show <$> (readExpr s >>= eval)
-  in putStrLn $ extractValue $ showErr evaled
