@@ -1,9 +1,8 @@
 module Utils where
 import Expr
-    ( Expr(Bool, List, Number, String),
-      SchemeError(TypeMismatch),
-      ThrowsError )
+    ( Expr(Bool, List, Number, String))
 import Control.Monad.Except ( MonadError(throwError) )
+import Error (ThrowsError, SchemeError (TypeMismatch))
 
 -----------------------------------------------
 

@@ -3,11 +3,11 @@ module Builtins where
 import Control.Monad.Except (MonadError (throwError))
 import qualified Data.Map.Strict as Map
 import Expr
-  ( Expr (Atom, Bool, DottedList, Double, List, Number, String, Procedure),
-    SchemeError (NumArgs, TypeMismatch, Default),
-    ThrowsError,
+  ( Expr (Atom, Bool, DottedList, List, Number, String, Procedure)
   )
 import Utils (unpackBool, unpackList, unpackNum, unpackStr)
+import Error (ThrowsError, SchemeError (NumArgs, TypeMismatch))
+import Env (Env)
 
 type Procedure = [Expr] -> ThrowsError Expr
 
@@ -63,7 +63,6 @@ isString _ = False
 
 isNumber :: (Expr -> Bool)
 isNumber (Number _) = True
-isNumber (Double _) = True
 isNumber _ = False
 
 ----------------------------------------------------

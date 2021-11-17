@@ -1,10 +1,10 @@
 module Ast where
 import Parser (Parser(Parser, Failure), runParser)
-import Expr (Expr (List, Atom, DottedList),
-             ThrowsError, SchemeError (Parse))
+import Expr (Expr (List, Atom, DottedList))
 import Parsers (padding, char, value, parens)
 import Control.Applicative (Alternative(many), (<|>))
 import Control.Monad.Except (MonadError(throwError))
+import Error (ThrowsError, SchemeError (Parse))
 
 ast :: Parser Char Expr
 ast = expr

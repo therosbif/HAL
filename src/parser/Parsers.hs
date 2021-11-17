@@ -6,7 +6,7 @@ import Control.Exception (catch)
 import Text.Read (readMaybe)
 import Data.Maybe (fromMaybe, isNothing)
 import Data.Functor ( ($>) )
-import Expr (Expr(Atom, Double, Number, Bool, String))
+import Expr (Expr(Atom, Number, Bool, String))
 
 check :: (i -> Bool) -> Parser i i
 check f = Parser $ \s -> case s of
@@ -81,7 +81,6 @@ atom = do
 
 value :: Parser Char Expr
 value =
-  Double  <$> double  <|>
   Number  <$> int     <|>
   Bool    <$> bool    <|>
   String  <$> string  <|>

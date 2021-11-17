@@ -26,18 +26,24 @@ source-repository head
 library
   exposed-modules:
       Ast
-      Builtins
+      Env
+      Error
       Eval
       Expr
       File
+      Repl
+      Utils
+      Builtins
+      Procedures
+      SpecialForms
       Parser
       Parsers
-      Procedures
-      Utils
   other-modules:
       Paths_hal
   hs-source-dirs:
       src
+      src/procedures
+      src/parser
   build-depends:
       base >=4.7 && <5
     , containers
