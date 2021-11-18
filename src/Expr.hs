@@ -2,9 +2,11 @@ module Expr where
 import Parser (Parser)
 import Control.Monad.Except ( ExceptT, MonadError(..), runExceptT )
 import Data.IORef (IORef)
+import System.IO (Handle)
 
 type Env = IORef [(String, IORef Expr)]
 type Procedure = [Expr] -> ThrowsError Expr
+type IOProcedure = [Expr] -> IOThrowsError Expr
 type SpecialForm = Env -> [Expr] -> IOThrowsError Expr
 
 data Expr =
@@ -14,8 +16,10 @@ data Expr =
   | Number Integer
   | String String
   | Bool Bool
+  | Port Handle
   | PrimitiveFunc Procedure
   | SpecicalFunc SpecialForm
+  | IOFunc IOProcedure
   | Func {  params :: [String],
             vaarg :: Maybe String,
             body  :: [Expr],
@@ -32,6 +36,8 @@ instance Show Expr where
   show (Bool False) = "#f"
   show (PrimitiveFunc _) = "#<primitive>"
   show (SpecicalFunc _) = "#<special>"
+  show (IOFunc _) = "#<IOprimitive>"
+  show (Port _) = "#<IOport>"
   show (Func args vaargs _ _) =
     "(lambda (" ++ unwords (map show args) ++
       (case vaargs of

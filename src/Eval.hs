@@ -7,19 +7,49 @@ import Control.Monad.Except (MonadError (throwError), MonadIO (liftIO), MonadTra
 import Data.Maybe (isNothing)
 import Env (bindVars, defineVar, emptyEnv, getVar, setVar)
 import Expr
-    ( IOThrowsError,
-      SchemeError(SpecialFormErr, Default, TypeMismatch, NumArgs,
-                  NotFunction),
-      Expr(List, DottedList, PrimitiveFunc, Func, String, Number, Bool,
-           Atom, SpecicalFunc),
-      Procedure,
-      Env,
-      liftThrows,
-      SpecialForm, ThrowsError )
+  ( Env,
+    Expr
+      ( Atom,
+        Bool,
+        DottedList,
+        Func,
+        IOFunc,
+        List,
+        Number,
+        PrimitiveFunc,
+        SpecicalFunc,
+        String
+      ),
+    IOProcedure,
+    IOThrowsError,
+    Procedure,
+    SchemeError
+      ( Default,
+        NotFunction,
+        NumArgs,
+        SpecialFormErr,
+        TypeMismatch
+      ),
+    SpecialForm,
+    ThrowsError,
+    liftThrows,
+  )
+import IoProcedures
+  ( closePort,
+    makePort,
+    readAll,
+    readContents,
+    readProc,
+    writeProc, load
+  )
 import Procedures
-    ( arithmeticProcedures, booleanProcedures, listProcedures )
-import Utils (unpackList, makeNormalFunc, makeVarargs)
-import SpecialForms (lambda)
+  ( arithmeticProcedures,
+    booleanProcedures,
+    listProcedures,
+  )
+import SpecialForms (lambda, quote)
+import System.IO (IOMode (ReadMode, WriteMode))
+import Utils (makeNormalFunc, makeVarargs, unpackList)
 
 procedures :: [([Char], Procedure)]
 procedures =
@@ -34,17 +64,32 @@ specialForms =
     ("define", define),
     ("set!", set),
     ("lambda", lambda),
-    ("let", schemeLet)
+    ("let", schemeLet),
+    ("quote", quote),
+    ("load", schemeLoad)
+  ]
+
+ioProcedures :: [(String, IOProcedure)]
+ioProcedures =
+  [ ("apply", applyProc),
+    ("open-input-file", makePort ReadMode),
+    ("open-output-file", makePort WriteMode),
+    ("close-input-port", closePort),
+    ("close-output-port", closePort),
+    ("read", readProc),
+    ("write", writeProc),
+    ("read-contents", readContents),
+    ("read-all", readAll)
   ]
 
 procedureBindings :: IO Env
 procedureBindings =
   emptyEnv
-    >>= flip bindVars (map createSpecial specialForms)
-    >>= flip bindVars (map createPrimitives procedures)
+    >>= flip bindVars (map (makeFunc PrimitiveFunc) procedures)
+    >>= flip bindVars (map (makeFunc SpecicalFunc) specialForms)
+    >>= flip bindVars (map (makeFunc IOFunc) ioProcedures)
   where
-    createPrimitives (key, func) = (key, PrimitiveFunc func)
-    createSpecial (key, func) = (key, SpecicalFunc func)
+    makeFunc c (key, func) = (key, c func)
 
 --------------------------------------------------------------------------------
 
@@ -84,13 +129,10 @@ set env [Atom key, val] = eval env val >>= setVar env key
 set _ [key, _] = throwError $ TypeMismatch "atom" key
 set _ args = throwError $ NumArgs 2 args
 
-makePairs :: [Expr] -> ThrowsError [(String, Expr)]
-makePairs (List [Atom key, val]:xs) =
-  makePairs xs >>= \s -> return $ (key, val):s
-makePairs (List [key, _]:_) = throwError $ TypeMismatch "atom" key
-makePairs (List x:_) = throwError $ NumArgs 2 x
-makePairs (a:_) = throwError $ TypeMismatch "list" a
-makePairs [] = return []
+schemeLoad :: SpecialForm
+schemeLoad env [String file] = load file >>= fmap last . mapM (eval env)
+schemeLoad _ [v] = throwError $ TypeMismatch "string" v
+schemeLoad _ v = throwError $ NumArgs 1 v
 
 schemeLet :: SpecialForm
 schemeLet env [List params, expr] = do
@@ -100,6 +142,14 @@ schemeLet env [List params, expr] = do
 schemeLet _ [a, _] = throwError $ TypeMismatch "list" a
 schemeLet _ a = throwError $ NumArgs 2 a
 
+makePairs :: [Expr] -> ThrowsError [(String, Expr)]
+makePairs (List [Atom key, val] : xs) =
+  makePairs xs >>= \s -> return $ (key, val) : s
+makePairs (List [key, _] : _) = throwError $ TypeMismatch "atom" key
+makePairs (List x : _) = throwError $ NumArgs 2 x
+makePairs (a : _) = throwError $ TypeMismatch "list" a
+makePairs [] = return []
+
 --------------------------------------------------------------------------------
 
 bindVarArgs :: Maybe String -> [Expr] -> Env -> IOThrowsError Env
@@ -108,17 +158,21 @@ bindVarArgs arg remainingArgs env =
     Nothing -> return env
     Just argName -> liftIO $ bindVars env [(argName, List remainingArgs)]
 
+applyProc :: IOProcedure
+applyProc [func, List args] = apply func args
+applyProc (func : args) = apply func args
+applyProc [] = throwError $ NumArgs 1 []
+
 apply :: Expr -> [Expr] -> IOThrowsError Expr
 apply (PrimitiveFunc func) args = liftThrows $ func args
 apply (Func params vaarg body closure) args
   | num params /= num args && isNothing vaarg =
     throwError $ NumArgs (num params) args
-  | otherwise =
-    liftIO (bindVars closure $ zip params args)
-      >>= bindVarArgs vaarg (drop (length params) args) >>= evalBody
-        where
-          num = toInteger . length
-          evalBody env = last <$> mapM (eval env) body
+  | otherwise = liftIO (bindVars closure $ zip params args)
+                  >>= bindVarArgs vaarg (drop (length params) args) >>= evalBody
+                    where
+                      num = toInteger . length
+                      evalBody env = last <$> mapM (eval env) body
 apply f _ = throwError $ NotFunction "Function not found" (show f)
 
 eval :: Env -> Expr -> IOThrowsError Expr
@@ -127,7 +181,6 @@ eval _ v@(Number _) = return v
 eval _ v@(Bool _) = return v
 eval env (Atom id) = getVar env id
 eval env (List [v]) = eval env v
-eval _ (List [Atom "quote", v]) = return v
 eval env (List (func : args)) =
   eval env func >>= (\case
                         SpecicalFunc f -> f env args

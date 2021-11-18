@@ -40,6 +40,5 @@ replLoop_ pred prompt action =
 runOnce :: String -> IO ()
 runOnce s = procedureBindings >>= flip printEvalStr s
 
-runRepl :: IO ()
-runRepl = procedureBindings >>=
-            replLoop_ (== "quit") (getInput "HAL *> ") . printEvalStr
+runRepl :: Env -> IO ()
+runRepl = replLoop_ (== "quit") (getInput "HAL *> ") . printEvalStr

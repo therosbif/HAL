@@ -33,6 +33,7 @@ library
       Repl
       Utils
       Builtins
+      IoProcedures
       Procedures
       SpecialForms
       Parser

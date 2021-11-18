@@ -15,3 +15,9 @@ lambda env (DottedList params varargs : bo : dy) =
 lambda env (varargs@(Atom _) : bo : dy) = makeVarargs varargs env [] (bo : dy)
 lambda _ (a : _) = throwError $ TypeMismatch "list" a
 lambda _ a = throwError $ NumArgs 2 a
+
+quote :: SpecialForm
+quote _ [v] = return v
+quote _ v = throwError $ NumArgs 1 v
+
+--------------------------------------------------------------------------------
