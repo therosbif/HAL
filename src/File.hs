@@ -22,9 +22,8 @@ handleFile f = f --do
 runFile :: [String] -> IO Env
 runFile [] = procedureBindings
 runFile args = do
-  env <-
-    procedureBindings
-      >>= flip bindVars [("args", List $ map String $ drop 1 args)]
+  env <- procedureBindings
+            >>= flip bindVars [("args", List $ map String $ drop 1 args)]
   runIOThrows
     (show <$> eval env (List [Atom "load", String $ head args]))
     >>= hPutStrLn stderr
