@@ -30,8 +30,8 @@ instance Show Expr where
   show (String x)   = "\"" ++ x ++ "\""
   show (Bool True)  = "#t"
   show (Bool False) = "#f"
-  show (PrimitiveFunc _) = "#<primitiveprocedure>"
-  show (SpecicalFunc _) = "#<specialprocedure>"
+  show (PrimitiveFunc _) = "#<primitive>"
+  show (SpecicalFunc _) = "#<special>"
   show (Func args vaargs _ _) =
     "(lambda (" ++ unwords (map show args) ++
       (case vaargs of

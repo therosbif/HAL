@@ -3,7 +3,7 @@
 module Eval where
 
 import Ast (readExpr)
-import Control.Monad.Except (MonadError (throwError), MonadIO (liftIO))
+import Control.Monad.Except (MonadError (throwError), MonadIO (liftIO), MonadTrans (lift))
 import Data.Maybe (isNothing)
 import Env (bindVars, defineVar, emptyEnv, getVar, setVar)
 import Expr
@@ -15,10 +15,11 @@ import Expr
       Procedure,
       Env,
       liftThrows,
-      SpecialForm )
+      SpecialForm, ThrowsError )
 import Procedures
     ( arithmeticProcedures, booleanProcedures, listProcedures )
-import Utils (unpackList)
+import Utils (unpackList, makeNormalFunc, makeVarargs)
+import SpecialForms (lambda)
 
 procedures :: [([Char], Procedure)]
 procedures =
@@ -32,7 +33,8 @@ specialForms =
     ("if", schemeIf),
     ("define", define),
     ("set!", set),
-    ("lambda", lambda)
+    ("lambda", lambda),
+    ("let", schemeLet)
   ]
 
 procedureBindings :: IO Env
@@ -82,23 +84,21 @@ set env [Atom key, val] = eval env val >>= setVar env key
 set _ [key, _] = throwError $ TypeMismatch "atom" key
 set _ args = throwError $ NumArgs 2 args
 
-lambda :: SpecialForm
-lambda env (List params : bo:dy) = makeNormalFunc env params (bo:dy)
-lambda env (DottedList params varargs : bo:dy) =
-  makeVarargs varargs env params (bo:dy)
-lambda env (varargs@(Atom _) : bo:dy) = makeVarargs varargs env [] (bo:dy)
-lambda _ (a : _) = throwError $ TypeMismatch "list" a
-lambda _ a = throwError $ NumArgs 2 a
+makePairs :: [Expr] -> ThrowsError [(String, Expr)]
+makePairs (List [Atom key, val]:xs) =
+  makePairs xs >>= \s -> return $ (key, val):s
+makePairs (List [key, _]:_) = throwError $ TypeMismatch "atom" key
+makePairs (List x:_) = throwError $ NumArgs 2 x
+makePairs (a:_) = throwError $ TypeMismatch "list" a
+makePairs [] = return []
 
-makeFunc :: Maybe String -> Env -> [Expr] -> [Expr] -> IOThrowsError Expr
-makeFunc vaargs env params body =
-  return $ Func (map show params) vaargs body env
-
-makeNormalFunc :: Env -> [Expr] -> [Expr] -> IOThrowsError Expr
-makeNormalFunc = makeFunc Nothing
-
-makeVarargs :: Expr -> Env -> [Expr] -> [Expr] -> IOThrowsError Expr
-makeVarargs = makeFunc . Just . show
+schemeLet :: SpecialForm
+schemeLet env [List params, expr] = do
+  pairs <- liftThrows $ makePairs params
+  e <- lift $ bindVars env pairs
+  eval e expr
+schemeLet _ [a, _] = throwError $ TypeMismatch "list" a
+schemeLet _ a = throwError $ NumArgs 2 a
 
 --------------------------------------------------------------------------------
 
@@ -128,7 +128,8 @@ eval _ v@(Bool _) = return v
 eval env (Atom id) = getVar env id
 eval env (List [v]) = eval env v
 eval _ (List [Atom "quote", v]) = return v
-eval env (List (func : args)) = eval env func >>= (\case
-                  SpecicalFunc f -> f env args
-                  f -> mapM (eval env) args >>= apply f)
+eval env (List (func : args)) =
+  eval env func >>= (\case
+                        SpecicalFunc f -> f env args
+                        f -> mapM (eval env) args >>= apply f)
 eval _ v = throwError $ SpecialFormErr "Unrecognized special form" v

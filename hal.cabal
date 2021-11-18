@@ -34,6 +34,7 @@ library
       Utils
       Builtins
       Procedures
+      SpecialForms
       Parser
       Parsers
   other-modules:
