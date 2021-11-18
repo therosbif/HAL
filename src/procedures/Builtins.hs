@@ -3,13 +3,12 @@ module Builtins where
 import Control.Monad.Except (MonadError (throwError))
 import qualified Data.Map.Strict as Map
 import Expr
-  ( Expr (Atom, Bool, DottedList, List, Number, String, Procedure)
+  ( Env,
+    Expr (Atom, Bool, DottedList, List, Number, String), Procedure,
+    SchemeError (NumArgs, TypeMismatch),
+    ThrowsError,
   )
 import Utils (unpackBool, unpackList, unpackNum, unpackStr)
-import Error (ThrowsError, SchemeError (NumArgs, TypeMismatch))
-import Env (Env)
-
-type Procedure = [Expr] -> ThrowsError Expr
 
 ----------------------------------------------------
 
@@ -68,28 +67,28 @@ isNumber _ = False
 ----------------------------------------------------
 
 car :: Procedure
-car [List (x:_)] = return x
-car [DottedList (x:_) _] = return x
+car [List (x : _)] = return x
+car [DottedList (x : _) _] = return x
 car [v] = throwError $ TypeMismatch "list" v
 car v = throwError $ NumArgs 1 v
 
 cdr :: Procedure
-cdr [List (_:xs)] = return $ List xs
+cdr [List (_ : xs)] = return $ List xs
 cdr [DottedList [_] a] = return a
-cdr [DottedList (_:xs) a] = return $ DottedList xs a
+cdr [DottedList (_ : xs) a] = return $ DottedList xs a
 cdr [v] = throwError $ TypeMismatch "list" v
 cdr v = throwError $ NumArgs 1 v
 
 cons :: Procedure
 cons [v, List []] = return $ List [v]
-cons [v, List vs] = return $ List (v:vs)
-cons [v, DottedList xs x] = return $ DottedList (v:xs) x
+cons [v, List vs] = return $ List (v : vs)
+cons [v, DottedList xs x] = return $ DottedList (v : xs) x
 cons [x, y] = return $ DottedList [x] y
 cons v = throwError $ NumArgs 2 v
 
 ----------------------------------------------------
 
-lambda :: Procedure
-lambda [args@(List _), e] = return $ Procedure args e
-lambda [args, e] = return $ Procedure (List [args]) e
-lambda v = throwError $ NumArgs 2 v
+-- lambda :: Procedure
+-- lambda [args@(List _), e] = return $ Func args e
+-- lambda [args, e] = return $ Func (List [args]) e
+-- lambda v = throwError $ NumArgs 2 v

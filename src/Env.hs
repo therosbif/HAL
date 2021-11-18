@@ -1,13 +1,10 @@
 module Env where
 
 import Data.IORef
-import Expr (Expr (Atom))
+import Expr (Expr (Atom), Env, IOThrowsError, SchemeError (UnboundVar))
 import Data.Functor
 import Data.Maybe (isJust)
 import Control.Monad.Except (MonadIO(liftIO), MonadError (throwError))
-import Error (IOThrowsError, SchemeError (UnboundVar))
-
-type Env = IORef [(String, IORef Expr)]
 
 emptyEnv :: IO Env
 emptyEnv = newIORef []

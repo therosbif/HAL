@@ -1,5 +1,11 @@
 module Expr where
 import Parser (Parser)
+import Control.Monad.Except ( ExceptT, MonadError(..), runExceptT )
+import Data.IORef (IORef)
+
+type Env = IORef [(String, IORef Expr)]
+type Procedure = [Expr] -> ThrowsError Expr
+type SpecialForm = Env -> [Expr] -> IOThrowsError Expr
 
 data Expr =
     Atom String
@@ -8,7 +14,12 @@ data Expr =
   | Number Integer
   | String String
   | Bool Bool
-  | Procedure Expr Expr
+  | PrimitiveFunc Procedure
+  | SpecicalFunc SpecialForm
+  | Func {  params :: [String],
+            vaarg :: Maybe String,
+            body  :: [Expr],
+            closure :: Env}
 
 instance Show Expr where
   show (Atom x)     = x
@@ -19,7 +30,13 @@ instance Show Expr where
   show (String x)   = "\"" ++ x ++ "\""
   show (Bool True)  = "#t"
   show (Bool False) = "#f"
-  show (Procedure _ _) = "#<procedure>"
+  show (PrimitiveFunc _) = "#<primitiveprocedure>"
+  show (SpecicalFunc _) = "#<specialprocedure>"
+  show (Func args vaargs _ _) =
+    "(lambda (" ++ unwords (map show args) ++
+      (case vaargs of
+        Nothing -> ""
+        Just a -> " . " ++ a) ++ ") ...)"
 
 instance Eq Expr where
   (Atom a) == (Atom b)      = a == b
@@ -39,3 +56,46 @@ instance Ord Expr where
   compare (String a) (String b) = compare a b
   compare (Bool a)   (Bool b)   = compare a b
   compare _ _ = GT
+
+--------------------------------------------------------------------------------
+
+data SchemeError =
+    NumArgs Integer [Expr]
+  | TypeMismatch String Expr
+  | Parse (Parser Char Expr) String
+  | SpecialFormErr String Expr
+  | NotFunction String String
+  | UnboundVar String String
+  | Default String
+
+type ThrowsError = Either SchemeError
+
+instance Show SchemeError where
+  show (UnboundVar msg varname)   = msg ++ ": " ++ varname
+  show (SpecialFormErr msg form)  = msg ++ ": " ++ show form
+  show (NotFunction msg func)     = msg ++ ": " ++ show func
+  show (Default msg)              = msg
+  show (Parse err errpos)         =
+    "Parse error: " ++ show err ++ "\n" ++ errpos
+  show (NumArgs expected found)   =
+    "Expected " ++ show expected ++ " args. Found values: " ++
+    (unwords . map show) found
+  show (TypeMismatch expected found) =
+    "Invalid type: expected " ++ expected ++ ", found " ++ show found
+
+showErr :: (MonadError a m, Show a) => m String -> m String
+showErr action = catchError action (return . show)
+
+extractValue :: ThrowsError a -> a
+extractValue (Right val) = val
+
+-------------------------------------------------------------
+
+type IOThrowsError = ExceptT SchemeError IO
+
+liftThrows :: ThrowsError a -> IOThrowsError a
+liftThrows (Left err) = throwError err
+liftThrows (Right v)  = return v
+
+runIOThrows :: IOThrowsError String -> IO String
+runIOThrows s = extractValue <$> runExceptT (showErr s)

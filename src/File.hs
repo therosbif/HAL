@@ -2,9 +2,9 @@ module File
     ( handleFile
     ) where
 import System.IO (readFile)
-import Builtins (Procedure)
+import Expr (Procedure)
 
-handleFile :: String -> [(String, Procedure)] -> [(String, Procedure)]
-handleFile f s = s--do
+handleFile :: String -> String
+handleFile f = f--do
     --xs <- lines <$> readFile f
     --interpret (unwords xs)

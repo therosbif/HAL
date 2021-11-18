@@ -7,16 +7,12 @@ import System.Exit (exitWith, exitSuccess, ExitCode (ExitFailure))
 import System.IO (stderr, hPutStr)
 import Control.Exception.Base (catch)
 import Control.Exception (SomeException(SomeException))
-import Builtins (Procedure)
 import Repl (runRepl)
 
-handleArgs :: [String] -> [(String, Procedure)] -> IO ()
-handleArgs [] _ = pure () -- REPL
-handleArgs (x:xs) s =
-  let
-    symbols = handleFile x s
-  in handleArgs xs symbols
-
+handleArgs :: [String] -> IO ()
+handleArgs [] = pure () -- REPL
+handleArgs (x:xs) =
+  handleArgs xs
 
 main :: IO ()
 main = do
@@ -24,7 +20,7 @@ main = do
   catch
     (if null args || elem "-i" args
       then runRepl
-      else handleArgs args [])
+      else handleArgs args)
     (\e ->
       let err = show (e :: SomeException)
       in if err /= "exitSuccess"

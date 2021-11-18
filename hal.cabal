@@ -27,7 +27,6 @@ library
   exposed-modules:
       Ast
       Env
-      Error
       Eval
       Expr
       File
@@ -35,7 +34,6 @@ library
       Utils
       Builtins
       Procedures
-      SpecialForms
       Parser
       Parsers
   other-modules:
