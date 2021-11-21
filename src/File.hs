@@ -14,11 +14,6 @@ import Expr
   )
 import System.IO (hPutStrLn, readFile, stderr)
 
-handleFile :: String -> String
-handleFile f = f --do
---xs <- lines <$> readFile f
---interpret (unwords xs)
-
 runFile :: [String] -> IO Env
 runFile [] = procedureBindings
 runFile args = do
