@@ -23,7 +23,10 @@ dependencies:
 - base >= 4.7 && < 5
 
 library:
-  source-dirs: src
+  source-dirs:
+    - src
+    - src/procedures
+    - src/parser
   dependencies:
   - haskeline
   - containers

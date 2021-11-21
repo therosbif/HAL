@@ -1,14 +1,19 @@
 module Procedures where
-import Expr (Expr, ThrowsError, SchemeError (NotFunction))
+
 import Builtins
-    ( binOp,
-      boolBinOp,
-      isAtom,
-      isNumber,
-      isString,
-      typeTest,
-      Procedure, car, cdr, cons, equal, lambda )
-import Control.Monad.Except (MonadError(throwError))
+  ( binOp,
+    boolBinOp,
+    car,
+    cdr,
+    cons,
+    equal,
+    isAtom,
+    isNumber,
+    isString,
+    typeTest,
+  )
+import Control.Monad.Except (MonadError (throwError))
+import Expr (Procedure)
 
 arithmeticProcedures :: [([Char], Procedure)]
 arithmeticProcedures =
@@ -38,7 +43,3 @@ listProcedures =
     ("cdr", cdr),
     ("cons", cons)
   ]
-
-specialFormProcedures :: [([Char], Procedure)]
-specialFormProcedures =
-  [ ("lambda", lambda)]

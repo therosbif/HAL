@@ -1,16 +1,29 @@
 module Expr where
 import Parser (Parser)
-import Control.Monad.Except (MonadError (catchError))
+import Control.Monad.Except ( ExceptT, MonadError(..), runExceptT )
+import Data.IORef (IORef)
+import System.IO (Handle)
+
+type Env = IORef [(String, IORef Expr)]
+type Procedure = [Expr] -> ThrowsError Expr
+type IOProcedure = [Expr] -> IOThrowsError Expr
+type SpecialForm = Env -> [Expr] -> IOThrowsError Expr
 
 data Expr =
     Atom String
   | List [Expr]
   | DottedList [Expr] Expr
   | Number Integer
-  | Double Double
   | String String
   | Bool Bool
-  | Procedure Expr Expr
+  | Port Handle
+  | PrimitiveFunc Procedure
+  | SpecicalFunc SpecialForm
+  | IOFunc IOProcedure
+  | Func {  params :: [String],
+            vaarg :: Maybe String,
+            body  :: [Expr],
+            closure :: Env}
 
 instance Show Expr where
   show (Atom x)     = x
@@ -18,11 +31,18 @@ instance Show Expr where
   show (DottedList l e) =
     "(" ++ (unwords . map show) l ++ " . " ++ show e ++ ")"
   show (Number x)   = show x
-  show (Double x)   = show x
   show (String x)   = "\"" ++ x ++ "\""
   show (Bool True)  = "#t"
   show (Bool False) = "#f"
-  show (Procedure _ _) = "#<procedure>"
+  show (PrimitiveFunc _) = "#<primitive>"
+  show (SpecicalFunc _) = "#<special>"
+  show (IOFunc _) = "#<IOprimitive>"
+  show (Port _) = "#<IOport>"
+  show (Func args vaargs _ _) =
+    "(lambda (" ++ unwords (map show args) ++
+      (case vaargs of
+        Nothing -> ""
+        Just a -> " . " ++ a) ++ ") ...)"
 
 instance Eq Expr where
   (Atom a) == (Atom b)      = a == b
@@ -30,9 +50,6 @@ instance Eq Expr where
   (DottedList a (List [])) == b    = List a == b
   a == (DottedList b (List []))    = a == List b
   (Number a) == (Number b)  = a == b
-  (Double a) == (Double b)  = a == b
-  (Number a) == b           = Double (fromIntegral a) == b
-  a == (Number b)           = a == Double (fromIntegral b)
   (String a) == (String b)  = a == b
   (Bool a) == (Bool b)      = a == b
   _ == _ = False
@@ -42,14 +59,11 @@ instance Ord Expr where
   compare (DottedList a as) b   = compare (List (a ++ [as])) b
   compare a (DottedList b bs)   = compare a (List (b ++ [bs]))
   compare (Number a) (Number b) = compare a b
-  compare (Double a) (Double b) = compare a b
-  compare (Number a) b          = compare (Double $ fromIntegral a) b
-  compare a          (Number b) = compare a (Double $ fromIntegral b)
   compare (String a) (String b) = compare a b
   compare (Bool a)   (Bool b)   = compare a b
   compare _ _ = GT
 
--------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 data SchemeError =
     NumArgs Integer [Expr]
@@ -75,8 +89,19 @@ instance Show SchemeError where
   show (TypeMismatch expected found) =
     "Invalid type: expected " ++ expected ++ ", found " ++ show found
 
-showErr :: ThrowsError String -> ThrowsError String
+showErr :: (MonadError a m, Show a) => m String -> m String
 showErr action = catchError action (return . show)
 
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
+
+-------------------------------------------------------------
+
+type IOThrowsError = ExceptT SchemeError IO
+
+liftThrows :: ThrowsError a -> IOThrowsError a
+liftThrows (Left err) = throwError err
+liftThrows (Right v)  = return v
+
+runIOThrows :: IOThrowsError String -> IO String
+runIOThrows s = extractValue <$> runExceptT (showErr s)
