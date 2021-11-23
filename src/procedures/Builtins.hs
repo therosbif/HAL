@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Builtins where
 
 import Control.Monad.Except (MonadError (throwError))
@@ -19,6 +20,7 @@ binOp op args
   | otherwise = Number . foldl1 op <$> mapM unpackNum args
 
 boolBinOp :: (Expr -> Expr -> Bool) -> Procedure
+boolBinOp op (DottedList begin last:xs) = boolBinOp op (begin ++ [last] ++ xs)
 boolBinOp op args
   | length args < 2 = throwError $ NumArgs 2 args
   | otherwise = return $ Bool $ pairs op args
@@ -88,7 +90,10 @@ cons v = throwError $ NumArgs 2 v
 
 ----------------------------------------------------
 
--- lambda :: Procedure
--- lambda [args@(List _), e] = return $ Func args e
--- lambda [args, e] = return $ Func (List [args]) e
--- lambda v = throwError $ NumArgs 2 v
+logicOp :: (Bool -> Bool -> Bool) -> Procedure
+logicOp _ [] = return $ Bool True
+logicOp op (Bool x:xs) =
+  logicOp op xs >>= (\case
+    Bool y -> return $ Bool $ x `op` y
+    a -> throwError $ TypeMismatch "bool" a)
+logicOp _ (x:_) = throwError $ TypeMismatch "bool" x

@@ -1,9 +1,20 @@
 module Ast where
-import Parser (Parser(Parser, Failure), runParser)
-import Expr (Expr (List, Atom, DottedList), ThrowsError, SchemeError (Parse), IOThrowsError, liftThrows)
-import Parsers (padding, char, value, parens)
-import Control.Applicative (Alternative(many), (<|>))
-import Control.Monad.Except (MonadError(throwError), MonadIO (liftIO))
+
+import Control.Applicative (Alternative (empty, many), (<|>))
+import Control.Monad.Except (MonadError (throwError), MonadIO (liftIO))
+import Expr
+  ( Expr
+      ( Atom,
+        DottedList,
+        List
+      ),
+    IOThrowsError,
+    SchemeError (Parse),
+    ThrowsError,
+    liftThrows,
+  )
+import Parser (Parser (Failure, Parser), runParser)
+import Parsers (anyNotOf, char, padding, parens, value)
 
 ast :: Parser Char Expr
 ast = expr
@@ -17,15 +28,16 @@ ast = expr
 
 readOrThrow :: Parser Char a -> String -> ThrowsError a
 readOrThrow p s = case runParser p s of
-  Left (e,i) -> throwError $ Parse (Failure e i) (errpos s i)
+  Left (e, i) -> throwError $ Parse (Failure e i) (errpos s i)
   Right o -> return o
-  where errpos s i = let
-          pos   = length s - length i
+  where
+    errpos s i =
+      let pos = length s - length i
           begin = take pos s
-          end   = drop pos s
-          red   = "\x1b[31m"
+          end = drop pos s
+          red = "\x1b[31m"
           reset = "\x1b[0m"
-          in "\t" ++ begin ++ red ++ "here-->" ++ reset ++ end ++ "\n"
+       in "\t" ++ begin ++ red ++ "here-->" ++ reset ++ end ++ "\n"
 
 readExpr :: String -> ThrowsError Expr
 readExpr = readOrThrow ast

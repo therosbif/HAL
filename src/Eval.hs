@@ -165,6 +165,7 @@ applyProc [] = throwError $ NumArgs 1 []
 
 apply :: Expr -> [Expr] -> IOThrowsError Expr
 apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (IOFunc func) args = func args
 apply (Func params vaarg body closure) args
   | num params /= num args && isNothing vaarg =
     throwError $ NumArgs (num params) args

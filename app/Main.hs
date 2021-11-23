@@ -1,7 +1,7 @@
 module Main where
 
 import System.Environment (getArgs)
-import File (handleFile, runFile)
+import File (runFile)
 import Data.Foldable (foldr1)
 import System.Exit (exitWith, exitSuccess, ExitCode (ExitFailure))
 import System.IO (stderr, hPutStr)

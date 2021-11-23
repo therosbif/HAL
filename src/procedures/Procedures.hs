@@ -10,7 +10,7 @@ import Builtins
     isAtom,
     isNumber,
     isString,
-    typeTest,
+    typeTest, logicOp
   )
 import Control.Monad.Except (MonadError (throwError))
 import Expr (Procedure)
@@ -29,9 +29,12 @@ arithmeticProcedures =
 booleanProcedures :: [([Char], Procedure)]
 booleanProcedures =
   [ ("eq?", boolBinOp (==)),
+    ("=", boolBinOp (==)),
     ("equal?", boolBinOp equal),
     ("<", boolBinOp (<)),
     (">", boolBinOp (>)),
+    ("&&", logicOp (&&)),
+    ("||", logicOp (||)),
     ("atom?", typeTest isAtom),
     ("string?", typeTest isString),
     ("number?", typeTest isNumber)

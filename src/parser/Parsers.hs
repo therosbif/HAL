@@ -76,7 +76,7 @@ atom = do
     where
       letter = anyOf $ ['a'..'z'] ++ ['A'..'Z']
       symbol = anyOf ['?', '!', '+', '-', '*', '/', '<', '=', '>',
-                      ':', '$', '%', '^', '&', '_', '~']
+                      ':', '$', '%', '^', '&', '_', '~', '|']
       digit = anyOf "1234567890"
 
 value :: Parser Char Expr

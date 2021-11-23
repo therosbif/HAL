@@ -34,10 +34,10 @@ instance Show Expr where
   show (String x)   = "\"" ++ x ++ "\""
   show (Bool True)  = "#t"
   show (Bool False) = "#f"
+  show (Port _) = "#<IOport>"
   show (PrimitiveFunc _) = "#<primitive>"
   show (SpecicalFunc _) = "#<special>"
   show (IOFunc _) = "#<IOprimitive>"
-  show (Port _) = "#<IOport>"
   show (Func args vaargs _ _) =
     "(lambda (" ++ unwords (map show args) ++
       (case vaargs of
