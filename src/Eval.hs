@@ -174,7 +174,7 @@ apply (Func params vaarg body closure) args
                     where
                       num = toInteger . length
                       evalBody env = last <$> mapM (eval env) body
-apply f _ = throwError $ NotFunction "Function not found" (show f)
+apply f _ = throwError $ TypeMismatch "function" f
 
 eval :: Env -> Expr -> IOThrowsError Expr
 eval _ v@(String _) = return v
