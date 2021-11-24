@@ -59,13 +59,12 @@ string :: Parser Char String
 string = char '"' *> stringContent <* char '"'
   where
     stringContent = many (escaped <|> anyNotOf "\"")
-    escaped = quote <|> backslash <|> newline <|> tab <|> carriageReturn
-      where
-        quote = char '\\' *> char '"'
-        backslash = char '\\' *> char '\\'
-        newline = keyWord "\\n" $> '\n'
-        tab = keyWord "\\t" $> '\t'
-        carriageReturn = keyWord "\\r" $> '\r'
+    escaped = char '\\' >> anyOf "\\\"ntr"
+      >>= \x -> return $ case x of
+                          't' -> '\t'
+                          'n' -> '\n'
+                          'r' -> '\r'
+                          _ -> x
 
 -- TODO (rosbif): implement character litteral parsing
 atom :: Parser Char String
