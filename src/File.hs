@@ -11,7 +11,6 @@ import Expr
     IOThrowsError,
     Procedure,
     liftThrows,
-    runIOThrows,
   )
 import System.IO (hPutStrLn, readFile, stderr, hPrint)
 

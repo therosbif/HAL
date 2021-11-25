@@ -89,12 +89,6 @@ instance Show SchemeError where
   show (TypeMismatch expected found) =
     "Invalid type: expected " ++ expected ++ ", found " ++ show found
 
-showErr :: (MonadError a m, Show a) => m String -> m String
-showErr action = catchError action (return . show)
-
-extractValue :: ThrowsError a -> a
-extractValue (Right val) = val
-
 -------------------------------------------------------------
 
 type IOThrowsError = ExceptT SchemeError IO
@@ -102,6 +96,3 @@ type IOThrowsError = ExceptT SchemeError IO
 liftThrows :: ThrowsError a -> IOThrowsError a
 liftThrows (Left err) = throwError err
 liftThrows (Right v)  = return v
-
-runIOThrows :: IOThrowsError String -> IO String
-runIOThrows s = extractValue <$> runExceptT (showErr s)

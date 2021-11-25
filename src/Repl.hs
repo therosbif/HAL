@@ -4,7 +4,7 @@ module Repl where
 import Ast (readExpr)
 import Env (emptyEnv)
 import Eval (eval, procedureBindings)
-import Expr (Env, liftThrows, runIOThrows, ThrowsError)
+import Expr (Env, liftThrows, ThrowsError)
 import GHC.Exception (SomeException (SomeException))
 import GHC.IO (catch)
 import System.IO

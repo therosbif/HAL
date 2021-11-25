@@ -29,23 +29,6 @@ pairs :: (a -> a -> Bool) -> [a] -> Bool
 pairs f (x : y : t) = f x y && pairs f (y : t)
 pairs f t = True
 
--- boolBinOp :: (Expr -> ThrowsError a) -> (a -> a -> Bool) -> Procedure
--- boolBinOp ext op args
---   | length args /= 2 = throwError $ NumArgs 2 args
---   | otherwise = do
---       l <- ext $ args !! 0
---       r <- ext $ args !! 1
---       return $ Bool $ l `op` r
-
--- numBoolBinOp :: (Integer -> Integer -> Bool) -> Procedure
--- numBoolBinOp  = boolBinOp (unpackNum . unpackList)
-
--- strBoolBinOp :: (String -> String -> Bool) -> Procedure
--- strBoolBinOp  = boolBinOp (unpackStr . unpackList)
-
--- boolBoolBinOp :: (Bool -> Bool -> Bool) -> Procedure
--- boolBoolBinOp = boolBinOp (unpackBool . unpackList)
-
 ----------------------------------------------------
 
 equal :: Expr -> Expr -> Bool
@@ -55,8 +38,9 @@ typeTest :: (Expr -> Bool) -> Procedure
 typeTest c args = return $ Bool $ all c args
 
 isAtom :: (Expr -> Bool)
-isAtom (Atom _) = True
-isAtom _ = False
+isAtom (List (_:_)) = False
+isAtom (DottedList _ _) = False
+isAtom _ = True
 
 isString :: (Expr -> Bool)
 isString (String _) = True
