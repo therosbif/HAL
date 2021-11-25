@@ -18,7 +18,7 @@ getInput :: String -> IO String
 getInput s =
   flushStr s
     >> catch
-      getLine(\e ->
+      getLine (\e ->
               if isEOFError e
                 then return "quit"
                 else hPrint stderr e >> return "")
@@ -32,13 +32,14 @@ printEvalStr env s = evalStr env s >>= (\case
                                           Right val -> putStrLn val
                                           Left err -> hPrint stderr err)
 
-replLoop_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
+replLoop_ :: Monad m => ([a] -> Bool) -> m [a] -> ([a] -> m ()) -> m ()
 replLoop_ pred prompt action =
   prompt
-    >>= ( \res ->
-            if pred res
-              then return ()
-              else action res >> replLoop_ pred prompt action
+    >>= ( \case
+            [] -> replLoop_ pred prompt action
+            res -> if pred res
+                    then return ()
+                    else action res >> replLoop_ pred prompt action
         )
 
 runOnce :: String -> IO ()
