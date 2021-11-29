@@ -17,7 +17,7 @@ makePort _ v = throwError $ NumArgs 1 v
 
 closePort :: IOProcedure
 closePort [Port port] = liftIO $ hClose port >> return (Bool True)
-closePort [_] = return $ Bool False
+closePort [v] = throwError $ TypeMismatch "port" v
 closePort v = throwError $ NumArgs 1 v
 
 readProc :: IOProcedure

@@ -8,6 +8,8 @@ type Env = IORef [(String, IORef Expr)]
 type Procedure = [Expr] -> ThrowsError Expr
 type IOProcedure = [Expr] -> IOThrowsError Expr
 type SpecialForm = Env -> [Expr] -> IOThrowsError Expr
+type ThrowsError = Either SchemeError
+type IOThrowsError = ExceptT SchemeError IO
 
 data Expr =
     Atom String
@@ -23,7 +25,7 @@ data Expr =
   | Func {  params :: [String],
             vaarg :: Maybe String,
             body  :: [Expr],
-            closure :: Env}
+            closure :: Env }
 
 instance Show Expr where
   show (Atom x)     = x
@@ -74,8 +76,6 @@ data SchemeError =
   | UnboundVar String String
   | Default String
 
-type ThrowsError = Either SchemeError
-
 instance Show SchemeError where
   show (UnboundVar msg varname)   = msg ++ ": " ++ varname
   show (SpecialFormErr msg form)  = msg ++ ": " ++ show form
@@ -90,8 +90,6 @@ instance Show SchemeError where
     "Invalid type: expected " ++ expected ++ ", found " ++ show found
 
 -------------------------------------------------------------
-
-type IOThrowsError = ExceptT SchemeError IO
 
 liftThrows :: ThrowsError a -> IOThrowsError a
 liftThrows (Left err) = throwError err

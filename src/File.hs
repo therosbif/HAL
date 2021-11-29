@@ -13,6 +13,7 @@ import Expr
     liftThrows,
   )
 import System.IO (hPutStrLn, readFile, stderr, hPrint)
+import System.Exit (die)
 
 runFile :: [String] -> IO Env
 runFile [] = procedureBindings
@@ -21,6 +22,6 @@ runFile args = do
             >>= flip bindVars [("args", List $ map String $ drop 1 args)]
   runExceptT (show <$> eval env (List [Atom "load", String $ head args]))
     >>= (\case
-            Left err -> hPrint stderr err
+            Left err -> die (show err)
             Right val -> putStrLn val)
   return env
