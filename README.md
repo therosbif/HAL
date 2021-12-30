@@ -1,6 +1,6 @@
 # HAL
 
-Haskell Lisp Interpreter written from scratch
+Haskell LISP Interpreter written from scratch
 
 ## Requirements
 
