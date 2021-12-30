@@ -24,4 +24,4 @@ To load files enter the files' paths as arguments. (ex: `stack run -- ./lisp/std
 
 The file paths can be used in combination with the `-i` flag to load files into the REPL.
 
-The `load` command can also be used to load files from within the REPL. (ex: `> (load "./lisp/stdlib.scm)`)
+The `load` command can also be used to load files from within the REPL. (ex: `> (load "./lisp/stdlib.scm")`)
